@@ -75,6 +75,5 @@ functions/.eslintrc.json
 firebase.json
 firestore.indexes.json
 firestore.rules
-functions/
 package-lock.json
 public/
