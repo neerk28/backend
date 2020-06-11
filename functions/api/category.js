@@ -1,7 +1,6 @@
 const logger = require('../middleware/logger');
 const config = require('config');
 const joi = require('@hapi/joi');
-const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 const express = require('express');
 const router = express.Router();
@@ -24,40 +23,6 @@ router.get('/', async (request, response) => {
     }
 });
 
-// router.post('/', async (request, response, next) => {
-//     const schema = joi.object({
-//         name: joi.string()
-//             .min(1)
-//             .max(30)
-//             .required(),
-//         description: joi.string()
-//             .min(1)
-//             .max(30)
-//             .required()
-//     })
-//     const {error} = validateParams(schema, request.body)
-//     if(error) {
-//         response.status(400).send(error.details[0].message)
-//         return;
-//     }
-
-//     try {
-//         let data = {
-//             name: request.body.name,
-//             description: request.body.description,
-//             isActive: true,
-//             products: [],
-//             created_date: `${Date.now()}`,
-//             last_updated: `${Date.now()}`
-//         }
-//         await db.collection('category').doc(data.name).set(datadsfds)
-//         console.log(`${data.name} document Created`)
-//         response.status(200).json(`${data.name} document Created`);
-//     } catch(err) {
-//         next(err);
-//     }
-// });
-
 router.post('/', async (request, response, next) => {
     logger.info('Creating category in firestore....');
     logger.debug('validating params');
@@ -71,13 +36,13 @@ router.post('/', async (request, response, next) => {
             .max(30)
             .required()
     })
-    logger.debug('validating params');
+
     const { error } = validateParams(schema, request.body)
     if (error) {
         response.status(400).send(error.details[0].message)
         return;
     }
-    logger.debug('validated params');
+
     let data = {
         name: request.body.name,
         description: request.body.description,
