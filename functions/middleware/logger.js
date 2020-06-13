@@ -12,7 +12,7 @@ const logger = createLogger({
         new transports.Console({
             format: winston.format.combine(
                     winston.format.timestamp(),
-                    winston.format.colorize({ all: true })
+                    winston.format.colorize({ all: true }),
             )
         }),
         new transports.File({filename: "logfile.log"}) 
