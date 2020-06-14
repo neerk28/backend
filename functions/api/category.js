@@ -23,7 +23,7 @@ router.get("/", async (request, response) => {
     snapshot.forEach(category => {
         var categoryInfo = {}
         var categoryData = category.data()
-        categoryInfo[constants.NAME] = category.id,
+        categoryInfo[constants.CATEGORY] = category.id,
         categoryInfo[constants.DESCRIPTION] = categoryData.description,
         categoryInfo[constants.IS_ACTIVE] = categoryData.isActive,
         categoryInfo[constants.CREATED_DATE] = categoryData.createdDate.toDate(),
@@ -38,6 +38,7 @@ router.get("/", async (request, response) => {
 /**
  * @description Route to retrieve single category data from firestore
  * @returns Json object containing requested category
+ * @throws 400 if the product does not exists in firestore
  */
 router.get('/:category', async (request, response, next) => {
     var  requestedCategory = request.params.category.toLocaleLowerCase()
@@ -52,7 +53,7 @@ router.get('/:category', async (request, response, next) => {
         return;
     }
     var categoryData = category.data()
-    categoryInfo[constants.NAME] = category.id
+    categoryInfo[constants.CATEGORY] = category.id
     categoryInfo[constants.DESCRIPTION] = categoryData.description
     categoryInfo[constants.IS_ACTIVE] = categoryData.isActive
     categoryInfo[constants.CREATED_DATE] = categoryData.createdDate.toDate()
@@ -84,6 +85,34 @@ router.get('/products/:category', async (request, response, next) => {
 });
 
 /**
+ * @description Route to retireve all active/inactive categories from firestore
+ * @returns Json object containing all categories
+ */
+router.get("/:active/categories", async (request, response) => {
+    logger.info("Retrieving all active/inactive categories from firestore");
+    var status = JSON.parse(request.params.active.toLocaleLowerCase());
+    const categories = {
+        "categories": []
+    }
+    let categoryCollection = db.collection(constants.CATEGORY)
+        .where(constants.IS_ACTIVE, '==', status)
+    let snapshot = await categoryCollection.get()
+    snapshot.forEach(category => {
+        var categoryInfo = {}
+        var categoryData = category.data()
+        categoryInfo[constants.CATEGORY] = category.id,
+        categoryInfo[constants.DESCRIPTION] = categoryData.description,
+        categoryInfo[constants.IS_ACTIVE] = categoryData.isActive,
+        categoryInfo[constants.CREATED_DATE] = categoryData.createdDate.toDate(),
+        categoryInfo[constants.LAST_UPDATED_DATE] = categoryData.lastUpdatedDate.toDate()
+        categories.categories.push(categoryInfo);
+    })
+    categories[constants.TOTAL_CATEGORIES] = snapshot.size;
+    logger.debug('Returning categories to client.');
+    response.status(200).send(categories);
+});
+
+/**
  * @description Route to add categories in Firestore
  * @returns Created category
  * @throws 400 if category already exists or if required params are missing
@@ -92,7 +121,7 @@ router.post('/', async (request, response, next) => {
     logger.info(`Creating category in firestore....`);
     // Validate parameters
     logger.debug('Validating params.')
-    const { error } = validateParamsForCategory(request.body)
+    const { error } = validateParams(request.body, constants.CATEGORY)
     if (error) {
         const err = new Error(error.details[0].message)
         err.statusCode = 400
@@ -117,8 +146,8 @@ router.post('/', async (request, response, next) => {
     data[constants.IS_ACTIVE] = true
     data[constants.CREATED_DATE] = new Date()
     data[constants.LAST_UPDATED_DATE] = new Date()
-    data['products'] = []
-    await db.collection('category').doc(categoryName).set(data)
+    data[constants.PRODUCTS] = []
+    await db.collection(constants.CATEGORY).doc(categoryName).set(data)
     logger.debug(`${categoryName} document Created`)
     var result = {}
     result[constants.CATEGORY] = categoryName
@@ -135,7 +164,7 @@ router.put('/desc', async (request, response, next) => {
     logger.info(`Updating description for category in firestore....`);
     
     // Validate parameters
-    const { error } = validateParamsForCategory(request.body)
+    const { error } = validateParams(request.body, constants.DESCRIPTION)
     if (error) {
         const err = new Error(error.details[0].message)
         err.statusCode = 400
@@ -176,7 +205,7 @@ router.put('/status', async (request, response, next) => {
     logger.info(`Updating status for category in firestore....`);
     
     // Validate parameters
-    const { error } = validateParamsForStatus(request.body)
+    const { error } = validateParams(request.body, constants.STATUS)
     if (error) {
         const err = new Error(error.details[0].message)
         err.statusCode = 400
@@ -185,7 +214,7 @@ router.put('/status', async (request, response, next) => {
     }
 
     // If category does not exists, return 400
-    var categoryName = request.body.category
+    var categoryName = request.body.category.toLocaleLowerCase()
     logger.info(`Updating description for category ${categoryName} in firestore....`);
     const categoryRef = db.collection(constants.CATEGORY).doc(categoryName);
     const category = await categoryRef.get()
@@ -236,43 +265,42 @@ router.delete('/:category', async(request, response, next) => {
         .send(data);
 })
 
-/**
- * @description Validates the request body for creating and updating description
- * @param {*} body request body
- * @returns true or false
- */
-function validateParamsForCategory(body) {
-    logger.debug("Validating request params...")
-    const schema = joi.object({
-        category: joi.string()
-            .min(1)
-            .max(30)
-            .required(),
-        description: joi.string()
-            .min(1)
-            .max(30)
-            .required()
-    })
-
-    return validate(schema, body)
-}
-
-/**
- * @description Validates the request body for updating status
- * @param {*} body request body
- * @returns true or false
- */
-function validateParamsForStatus(body) {
-    logger.debug("Validating request params...")
-    const schema = joi.object({
-        category: joi.string()
-            .min(1)
-            .max(30)
-            .required(),
-        isActive: joi.bool()
-            .required()
-    })
-
+ /**
+  * Validates the request body.
+  * @param {*} body request body
+  * @param {*} type identifier to determine which request is to be validated
+  *         category for create category
+  *         description for updating description
+  *         status for updating status
+  */
+function validateParams(body, type) {
+    let schema;
+    switch(type) {
+        case constants.CATEGORY:
+        case constants.DESCRIPTION:
+            schema = joi.object({
+                category: joi.string()
+                    .min(1)
+                    .max(30)
+                    .required(),
+                description: joi.string()
+                    .min(1)
+                    .max(50)
+                    .required()
+            })
+            break
+        case  constants.STATUS:
+            schema = joi.object({
+                category: joi.string()
+                    .min(1)
+                    .max(30)
+                    .required(),
+                isActive: joi.bool()
+                    .required()
+            })
+            break
+    }
+    console.log(schema)
     return validate(schema, body)
 }
 
