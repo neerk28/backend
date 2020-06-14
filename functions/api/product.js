@@ -154,7 +154,6 @@ router.get('/:active/:category', async (request, response, next) => {
     response.status(200).send(products);
 });
 
-
 /**
  * @description Route to add products in Firestore
  * @returns Created product
@@ -172,7 +171,7 @@ router.post('/', async (request, response, next) => {
         return;
     }
 
-    // If category already exists, return 400
+    // If product already exists, return 400
     var productName = request.body.product.toLocaleLowerCase()
     logger.info(`Creating product ${productName} in firestore....`);
     const doc = db.collection(constants.PRODUCT).doc(productName);

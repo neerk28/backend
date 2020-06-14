@@ -10,6 +10,8 @@ define("CATEGORY", "category");
 define("PRODUCT", "product");
 define("PRODUCTS", "products");
 define("OPERATION", "operation");
+define("THRESHOLD", "threshold");
+define("THRESHOLDS", "thresholds");
 define("DESCRIPTION", "description");
 define("LABEL", "label");
 define("IS_ACTIVE", "isActive");
@@ -20,5 +22,7 @@ define("TOTAL_PRODUCTS", "totalProducts");
 define("TOTAL_OPERATIONS", "totalOperations");
 define("STATUS", "status");
 define("UNIT", "unit");
+define("ADD", "add");
+define("UPDATE", "update");
 //define("FOOD", "food");
 
