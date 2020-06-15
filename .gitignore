@@ -78,3 +78,4 @@ firestore.rules
 package-lock.json
 public/
 functions/scratchpad.js
+.DS_Store
