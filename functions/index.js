@@ -7,7 +7,7 @@ const admin = require('firebase-admin');
 // Initialize Firebase App
 admin.initializeApp({
   credential: admin.credential.applicationDefault(),
-  databaseURL: "https://local-parikrama.firebaseio.com"
+  databaseURL: "https://exercise1-ea6c9.firebaseio.com"
 });
 
 logger.info('Initializing Inventory Management System');
