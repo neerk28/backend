@@ -77,6 +77,9 @@ router.get('/:id', async (req, res, next) => {
 3.Sets/updates the custom claims for the uid
 */
 router.put('/', async (req, res, next) => {
+    if(req.body.createdDate){
+        delete req.body.createdDate
+    }
     const { error } = validateInput(req.body, 'UPDATE')
     if (error) {
         const err = new Error(error.details[0].message)

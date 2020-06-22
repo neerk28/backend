@@ -2,7 +2,8 @@ var express = require('express')
 var router = express.Router()
 const admin = require('firebase-admin')
 const db = admin.firestore()
-
+const joi = require('@hapi/joi');
+const validate = require('../validation/validation')
 /*
 1.Creates a new role along with its permissions, status and description
 */
@@ -64,6 +65,9 @@ router.get('/:role', async (req, res, next) => {
 2.Status of the role, description of role can also be updated
 */
 router.put('/', async (req, res, next) => {
+    if(req.body.createdDate){
+        delete req.body.createdDate
+    }
     const { error } = validateInput(req.body, 'UPDATE')
     if (error) {
         const err = new Error(error.details[0].message)
@@ -110,8 +114,8 @@ function validateInput(body, type) {
         case 'UPDATE':
             schema = joi.object().keys({
                 id: joi.string().regex(/^[a-z]{5,10}$/).required(),
-                description: joi.string().regex(/^[a-zA-Z]{5,40}$/).optional(),
-                permissions: joi.array().items(Joi.string().required()).required(),
+                description: joi.string().regex(/^[a-z A-Z]{5,40}$/).optional(),
+                permissions: joi.array().items(joi.string().required()).required(),
                 isActive: joi.bool(),
                 createdDate: joi.date(),
                 lastUpdatedDate: joi.date()
